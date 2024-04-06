@@ -23,7 +23,7 @@ def scroll_and_scrape():
     last_height = driver.execute_script("return document.body.scrollHeight")
     while True:
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(5)  # Wait for the page to load after scrolling
+        time.sleep(2)  # Wait for the page to load after scrolling
 
         new_height = driver.execute_script("return document.body.scrollHeight")
         if new_height == last_height:
@@ -51,7 +51,6 @@ def scroll_and_scrape():
                     "topics": topics
                 }
                 collection.insert_one(product_doc)
-                time.sleep(20)
             except Exception as e:
                 print(f"Error encountered for {product_name}: {e}")
                 continue

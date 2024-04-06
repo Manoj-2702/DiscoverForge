@@ -46,12 +46,11 @@ def scroll_and_scrape():
         #     break
         # last_height = new_height
 
-for page in range(0,3):
+while True:
     scroll_and_scrape()
-    time.sleep(10) 
+    time.sleep(5) 
     next_button = driver.find_element(By.LINK_TEXT, "Next")
     next_button.click()
-    page += 1
 
 # time.sleep(50)
 driver.quit()
