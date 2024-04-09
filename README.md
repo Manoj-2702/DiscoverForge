@@ -1,6 +1,6 @@
 # G2Hack
 
-## Setup
+## Kafka Setup
 run these command in kafka folder
 ```bash
 # start zookeeper
