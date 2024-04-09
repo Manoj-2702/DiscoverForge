@@ -75,6 +75,7 @@ def main():
     try:
         scrape_slashdot(driver, producer)
         scrape_producthunt(driver, producer)
+        
     finally:
         driver.quit()
         producer.close()
