@@ -4,58 +4,63 @@ from selenium.webdriver.common.by import By
 from kafka import KafkaProducer
 import time
 import json
+from threading import Thread
 
 def setup_webdriver():
+    options = webdriver.EdgeOptions()
+    options.add_argument('--headless')
     service = Service("edgedriver_win64/msedgedriver.exe")
-    return webdriver.Edge(service=service)
+    return webdriver.Edge(service=service, options=options)
 
 def setup_kafka_producer():
     print("Setting up Kafka producer")
     return KafkaProducer(bootstrap_servers=['localhost:9092'], value_serializer=lambda x: json.dumps(x).encode('utf-8'))
 
 def scrape_slashdot(driver, producer):
-    driver.get("https://slashdot.org/")
-    time.sleep(5)
-    all_element = driver.find_element(By.LINK_TEXT, "Software")
-    all_element.click()
+    try:
+        driver.get("https://slashdot.org/")
+        time.sleep(5)
+        all_element = driver.find_element(By.LINK_TEXT, "Software")
+        all_element.click()
 
-    def scroll_and_scrape_slashdot():
-        try:
+        while True:
             products = driver.find_elements(By.CSS_SELECTOR, "div.result-heading-texts")
             for product in products:
                 product_name = product.find_element(By.CSS_SELECTOR, "h3").text
                 description = product.find_element(By.CSS_SELECTOR, "div.description").text
                 data = {"name": product_name, "description": description}
+                # Send data to Kafka
                 producer.send('Software', value=data)
-        except Exception as e:
-            print(f"Error extracting product details: {e}")
 
-    while True:
-        scroll_and_scrape_slashdot()
-        time.sleep(5)
-        try:
-            next_button = driver.find_element(By.LINK_TEXT, "Next")
-            next_button.click()
-        except:
-            print("No more pages to scrape for Slashdot.")
-            break
+            time.sleep(5)
+            try:
+                next_button = driver.find_element(By.LINK_TEXT, "Next")
+                next_button.click()
+            except:
+                print("No more pages to scrape for Slashdot.")
+                break
+    except Exception as e:
+        print(f"Error in scrape_slashdot: {e}")
+    finally:
+        driver.quit()
 
 def scrape_producthunt(driver, producer):
-    driver.get("https://www.producthunt.com/")
-    time.sleep(5)
-    all_element = driver.find_element(By.LINK_TEXT, "All")
-    all_element.click()
+    try:
+        driver.get("https://www.producthunt.com/")
+        time.sleep(5)
+        all_element = driver.find_element(By.LINK_TEXT, "All")
+        all_element.click()
 
-    def scroll_and_scrape_producthunt():
-        last_height = driver.execute_script("return document.body.scrollHeight")
         while True:
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(2)
+            last_height = driver.execute_script("return document.body.scrollHeight")
+            while True:
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(2)
 
-            new_height = driver.execute_script("return document.body.scrollHeight")
-            if new_height == last_height:
-                break
-            last_height = new_height
+                new_height = driver.execute_script("return document.body.scrollHeight")
+                if new_height == last_height:
+                    break
+                last_height = new_height
 
             containers = driver.find_elements(By.CSS_SELECTOR, "div.styles_titleItem__bCaNQ")
             for container in containers:
@@ -65,20 +70,32 @@ def scrape_producthunt(driver, producer):
                 product_description = parts[1].strip() if len(parts) > 1 else "No description"
                 topics = [topic.text for topic in container.find_elements(By.CSS_SELECTOR, "div.styles_underlinedLink__MUPq8, a.styles_underlinedLink__MUPq8")]
                 data = {"name": product_name, "description": product_description, "topics": topics}
+                # Send data to Kafka
                 producer.send('ProductHunt', value=data)
-
-    scroll_and_scrape_producthunt()
-
-def main():
-    driver = setup_webdriver()
-    producer = setup_kafka_producer()
-    try:
-        scrape_slashdot(driver, producer)
-        scrape_producthunt(driver, producer)
-        
+            break
+    except Exception as e:
+        print(f"Error in scrape_producthunt: {e}")
     finally:
         driver.quit()
-        producer.close()
+
+def main():
+    producer = setup_kafka_producer()
+    # Creating separate WebDriver instances for each thread
+    driver1 = setup_webdriver()
+    driver2 = setup_webdriver()
+    
+    # Initialize and start threads
+    thread1 = Thread(target=scrape_slashdot, args=(driver1, producer))
+    thread2 = Thread(target=scrape_producthunt, args=(driver2, producer))
+    
+    thread1.start()
+    thread2.start()
+
+    # Wait for both threads to complete
+    thread1.join()
+    thread2.join()
+
+    producer.close()
 
 if __name__ == "__main__":
     main()

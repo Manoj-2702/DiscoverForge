@@ -1,11 +1,16 @@
 # LIST ALL THE PRODUCTS
 import requests
 import json
+from dotenv import load_dotenv
+from os import getenv
+load_dotenv()
+api_token = getenv("G2_API_KEY")
+
 
 def list_products(api_token, filter_name='None', filter_domain=None, filter_slug=None):
     url = "https://data.g2.com/api/v1/products"
     headers = {
-        "Authorization": f"Token token={'aa5deebd29017ba37256daa62e4db72aecf3e84bfefd09368b4ad4aab5a8843e'}",
+        "Authorization": f"Token token={str(api_token)}",
         "Content-Type": "application/vnd.api+json"
     }
     params = {}
@@ -23,6 +28,6 @@ def list_products(api_token, filter_name='None', filter_domain=None, filter_slug
         return f"Failed to fetch products, status code: {response.status_code}"
 
 # Example usage
-api_token = "secret"
+
 # Adjust the filter arguments as needed
 print(list_products(api_token, filter_name="StealthGPT"))
