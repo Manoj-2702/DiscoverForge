@@ -15,4 +15,5 @@ run these command in kafka folder
 ![image](https://github.com/Manoj-2702/G2Hack/assets/92267208/c6b9b71b-4540-45ab-b600-c4ede2bec064)
 
 ## Kafka Architecture
-//TODO
+![image](https://github.com/Manoj-2702/G2Hack/assets/92267208/4ce38d65-ebe1-4a2f-8db8-ea07ac804fc9)
+
