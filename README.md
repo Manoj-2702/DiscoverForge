@@ -1,19 +1,22 @@
 # G2Hack
 
 ## Kafka Setup
-run these command in kafka folder
+run this command in root directory of the project
 ```bash
-# start zookeeper
-.\bin\windows\zookeeper-server-start.bart .\config\zookeeper.properties
+# start zookeeper and kafka
+ docker-compose up -d
 ```
+shutdown the kafka and zookeeper
 ```bash
-# start kafka
-.\bin\windows\kafka-server-start.bat .\config\server.properties
+# stop zookeeper and kafka
+ docker-compose down
 ```
+
 
 ## Project Architecture
 ![image](https://github.com/Manoj-2702/G2Hack/assets/92267208/c6b9b71b-4540-45ab-b600-c4ede2bec064)
 
 ## Kafka Architecture
 ![image](https://github.com/Manoj-2702/G2Hack/assets/92267208/4ce38d65-ebe1-4a2f-8db8-ea07ac804fc9)
+
 

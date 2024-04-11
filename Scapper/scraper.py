@@ -5,23 +5,26 @@ from kafka import KafkaProducer
 import time
 import json
 from threading import Thread
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException, TimeoutException
 
 def setup_webdriver():
-    options = webdriver.EdgeOptions()
-    options.add_argument('--headless')
     service = Service("edgedriver_win64/msedgedriver.exe")
-    return webdriver.Edge(service=service, options=options)
+    return webdriver.Edge(service=service)
 
 def setup_kafka_producer():
     print("Setting up Kafka producer")
     return KafkaProducer(bootstrap_servers=['localhost:9092'], value_serializer=lambda x: json.dumps(x).encode('utf-8'))
 
-def scrape_slashdot(driver, producer):
+def scrape_slashdot(producer):
     try:
-        driver.maximize_window()
+        driver = setup_webdriver()
+        # driver.maximize_window()
+        wait = WebDriverWait(driver, 10)
         driver.get("https://slashdot.org/")
-        time.sleep(5)
-        all_element = driver.find_element(By.LINK_TEXT, "Software")
+        # time.sleep(5)
+        all_element = wait.until(EC.element_to_be_clickable((By.LINK_TEXT, "Software")))
         all_element.click()
 
         while True:
@@ -39,18 +42,33 @@ def scrape_slashdot(driver, producer):
                 next_button.click()
             except:
                 print("No more pages to scrape for Slashdot.")
+                # driver.quit()
                 break
+            # finally:
+            #   driver.quit()
+    except NoSuchElementException as e:
+       
+        print(f"Element not found: {e}")
+    except ElementNotInteractableException as e:
+     
+        print(f"Element not interactable: {e}")
+    except TimeoutException as e:
+       
+        print(f"Operation timed out: {e}")
     except Exception as e:
+        
         print(f"Error in scrape_slashdot: {e}")
-    finally:
-        driver.quit()
 
-def scrape_producthunt(driver, producer):
+
+def scrape_producthunt(producer):
     try:
+        
+        driver = setup_webdriver()
         driver.maximize_window()
+        wait = WebDriverWait(driver, 10)
         driver.get("https://www.producthunt.com/")
-        time.sleep(5)
-        all_element = driver.find_element(By.LINK_TEXT, "All")
+        # time.sleep(5)
+        all_element = wait.until(EC.element_to_be_clickable((By.LINK_TEXT, "All")))
         all_element.click()
 
         while True:
@@ -73,22 +91,25 @@ def scrape_producthunt(driver, producer):
                 topics = [topic.text for topic in container.find_elements(By.CSS_SELECTOR, "div.styles_underlinedLink__MUPq8, a.styles_underlinedLink__MUPq8")]
                 data = {"name": product_name, "description": product_description, "topics": topics}
                 # Send data to Kafka
-                producer.send('ProductHunt', value=data)
+                producer.send('Software', value=data)
+                
             break
-    except Exception as e:
+       
+    except Exception as e:  
         print(f"Error in scrape_producthunt: {e}")
-    finally:
-        driver.quit()
 
-def scrape_sideprojectors(driver,producer):
+def scrape_sideprojectors(producer):
     try:
+        driver = setup_webdriver()
         driver.maximize_window()
+        wait = WebDriverWait(driver, 5)
         driver.get("https://www.sideprojectors.com/#/")
-        time.sleep(5)
+        # time.sleep(5)
         ids = ["input-project-type-blog", "input-project-type-domain", "input-project-type-other"]
 
         for id_value in ids:
             try:
+                # element = wait.until(EC.element_to_be_clickable((By.ID, id_value)))
                 element = driver.find_element(By.ID, id_value)
                 element.click()
             except:
@@ -107,9 +128,9 @@ def scrape_sideprojectors(driver,producer):
                 description = product.find_element(By.CSS_SELECTOR, "div.description").text
                 date_span = product.find_elements(By.CSS_SELECTOR, "div.mt-6.flex.items-center span.gray-text")[-1].text
                 product_doc = {"name": product_name, "description": description,"date": date_span}
-                producer.send('SideProjectors', value=product_doc)
+                producer.send('Software', value=product_doc)
 
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            # driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             time.sleep(5)
 
             try:
@@ -118,24 +139,19 @@ def scrape_sideprojectors(driver,producer):
             except:
                 print("No more pages to scrape for SideProjectors.")
                 break
+        # driver.quit()
 
     except Exception as e:
         print(f"Error in scrape_slashdot: {e}")
-    finally:
-        driver.quit()
+
 
 
 def main():
     producer = setup_kafka_producer()
-    # Creating separate WebDriver instances for each thread
-    driver1 = setup_webdriver()
-    driver2 = setup_webdriver()
-    driver3 = setup_webdriver()
-    
     # Initialize and start threads
-    thread1 = Thread(target=scrape_slashdot, args=(driver1, producer))
-    thread2 = Thread(target=scrape_producthunt, args=(driver2, producer))
-    thread3 = Thread(target=scrape_sideprojectors, args=(driver3, producer))
+    thread1 = Thread(target=scrape_slashdot, args=(producer,))
+    thread2 = Thread(target=scrape_producthunt, args=(producer,))
+    thread3 = Thread(target=scrape_sideprojectors, args=(producer,))
     
     thread1.start()
     thread2.start()
