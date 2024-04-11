@@ -31,9 +31,6 @@ def setup_webdriver():
     service = Service(ChromeDriverManager().install())
     return webdriver.Chrome(service=service, options=chrome_options)
 
-# Continue with other functions as they are. Ensure all function names and logic remain coherent with their usages.
-
-
 # def setup_webdriver():
 #     chrome_options = Options()   
 #     chrome_options.add_argument("--headless")
@@ -242,7 +239,7 @@ def betalist_scraper(producer):
 
             # Extract and print the name and description from each <div>
             for div in details_divs:
-    # Find the <a> tag for name and href
+   
                 name_tag = div.find('a', class_='block whitespace-nowrap text-ellipsis overflow-hidden font-medium')
                 if name_tag:
                     name = name_tag.text.strip()
@@ -267,7 +264,7 @@ def betalist_scraper(producer):
                 "link_topic": full_url,
                 "startups": startups
             })
-            print(topics_data)
+            # print(topics_data)
 
             # Write the updated data to a JSON file
             with open('output_sites2.json', 'w') as f:
@@ -314,20 +311,20 @@ def main():
     thread2 = Thread(target=scrape_producthunt, args=(producer,))   #no crowler required
     thread3 = Thread(target=scrape_sideprojectors, args=(producer,))
     thread4 = Thread(target=scrape_twitter, args=(producer,))
-    # thread5 = Thread(target=betalist_scraper, args=(producer,))
+    thread5 = Thread(target=betalist_scraper, args=(producer,))
     
     thread1.start()
     thread2.start()
     thread3.start()
     thread4.start()
-    # thread5.start()
+    thread5.start()
 
     # Wait for both threads to complete
     thread1.join()
     thread2.join()
     thread3.join()
     thread4.join()
-    # thread5.join()
+    thread5.join()
 
     producer.close()
 
