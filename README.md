@@ -12,6 +12,15 @@ shutdown the kafka and zookeeper
  docker-compose down
 ```
 
+## run scrapper
+```bash
+# run scrapper
+cd scrapper
+# build the image
+docker build -t scrapper-image .
+# run the image
+docker run --network="host" scrapper-image
+```
 
 ## Project Architecture
 ![image](https://github.com/Manoj-2702/G2Hack/assets/92267208/c6b9b71b-4540-45ab-b600-c4ede2bec064)

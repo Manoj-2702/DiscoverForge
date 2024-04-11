@@ -1,23 +1,19 @@
 from selenium import webdriver
-from selenium.webdriver.edge.service import Service
 from selenium.webdriver.common.by import By
-from kafka import KafkaProducer
-import time
-import json
-from threading import Thread
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException, TimeoutException
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException, TimeoutException
+from selenium.webdriver.common.keys import Keys
+import os, time, json, requests
+from kafka import KafkaProducer
+from threading import Thread
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-import requests
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
 from dotenv import load_dotenv
-import os
+from selenium.webdriver.chrome.service import Service
+
 load_dotenv()
 TWITTER_USER_NAME=os.getenv("TWITTER_USER_NAME")
 TWITTER_PASSWORD=os.getenv("TWITTER_PASSWORD")
@@ -25,8 +21,29 @@ TWITTER_PASSWORD=os.getenv("TWITTER_PASSWORD")
 def setup_webdriver():
     chrome_options = Options()   
     chrome_options.add_argument("--disable-popup-blocking")
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--window-size=1920x1080") # Adjust as needed
+    chrome_options.binary_location = "/usr/bin/google-chrome"  # Specify the path to Chrome in Docker
+
     service = Service(ChromeDriverManager().install())
-    return webdriver.Chrome(service=service,)
+    return webdriver.Chrome(service=service, options=chrome_options)
+
+# Continue with other functions as they are. Ensure all function names and logic remain coherent with their usages.
+
+
+# def setup_webdriver():
+#     chrome_options = Options()   
+#     chrome_options.add_argument("--headless")
+#     chrome_options.add_argument("--disable-gpu")
+#     chrome_options.add_argument("--no-sandbox")
+#     chrome_options.add_argument("--disable-dev-shm-usage")
+#     # Directly reference the ChromeDriver path
+#     service = ChromeService(executable_path="/usr/local/bin/chromedriver")
+#     return webdriver.Chrome(service=service, options=chrome_options)
+
  
 
 def setup_kafka_producer():
@@ -273,20 +290,20 @@ def main():
     thread2 = Thread(target=scrape_producthunt, args=(producer,))   #no crowler required
     thread3 = Thread(target=scrape_sideprojectors, args=(producer,))
     thread4 = Thread(target=scrape_twitter, args=(producer,))
-    thread5 = Thread(target=betalist_scraper, args=(producer,))
+    # thread5 = Thread(target=betalist_scraper, args=(producer,))
     
     thread1.start()
     thread2.start()
     thread3.start()
     thread4.start()
-    thread5.start()
+    # thread5.start()
 
     # Wait for both threads to complete
     thread1.join()
     thread2.join()
     thread3.join()
     thread4.join()
-    thread5.join()
+    # thread5.join()
 
     producer.close()
 
