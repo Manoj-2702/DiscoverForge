@@ -8,10 +8,16 @@ from threading import Thread
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException, TimeoutException
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 
 def setup_webdriver():
-    service = Service("edgedriver_win64/msedgedriver.exe")
-    return webdriver.Edge(service=service)
+    chrome_options = Options()   
+    chrome_options.add_argument("--disable-popup-blocking")
+    service = Service(ChromeDriverManager().install())
+    return webdriver.Chrome(service=service,)
+ 
 
 def setup_kafka_producer():
     print("Setting up Kafka producer")
@@ -102,7 +108,7 @@ def scrape_sideprojectors(producer):
     try:
         driver = setup_webdriver()
         driver.maximize_window()
-        wait = WebDriverWait(driver, 5)
+        wait = WebDriverWait(driver, 10)
         driver.get("https://www.sideprojectors.com/#/")
         # time.sleep(5)
         ids = ["input-project-type-blog", "input-project-type-domain", "input-project-type-other"]
@@ -157,7 +163,7 @@ def main():
     thread2.start()
     thread3.start()
 
-    # Wait for both threads to complete
+
     thread1.join()
     thread2.join()
     thread3.join()
