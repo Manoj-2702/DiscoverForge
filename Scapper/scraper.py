@@ -11,7 +11,9 @@ from selenium.common.exceptions import NoSuchElementException, ElementNotInterac
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
-
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+import requests
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from dotenv import load_dotenv
@@ -200,6 +202,70 @@ def scrape_twitter(producer):
     finally:
         driver.quit()
 
+def betalist_scraper(producer):
+
+    def scrape_and_print_all_details(base_url, href_list,producer):
+        for href in href_list:
+            # Construct the full URL
+            full_url = urljoin(base_url, href)
+
+            # Send a GET request to the full URL
+            response = requests.get(full_url)
+            response.raise_for_status()  # Raise an HTTPError for bad responses
+
+            # Parse the HTML content of the page
+            soup = BeautifulSoup(response.text, 'html.parser')
+
+            # Find all <div> tags with class 'startupCard__details'
+            details_divs = soup.find_all('div', class_='startupCard__details')
+
+            # Extract and print the name and description from each <div>
+            for div in details_divs:
+                # Find the <a> tag for name
+                name_tag = div.find('a', class_='block whitespace-nowrap text-ellipsis overflow-hidden font-medium')
+                name = name_tag.text.strip() if name_tag else "Name not found"
+
+                # Find the <div> tag for description
+                description_div = div.find('a', class_='block text-gray-500 dark:text-gray-400')
+                description = description_div.get_text(strip=True) if description_div else "Description not found"
+
+                message = {'name': name, 'description': description}
+
+                # Send the message to the Kafka topic
+                producer.send('Software', message)
+                producer.flush()
+
+
+
+    # URL of the page to scrape
+    url = "https://betalist.com/topics"
+
+    # Send a GET request to the URL
+    response = requests.get(url)
+
+    # Parse the HTML content
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Find all <div> tags with class 'myContainer'
+    containers = soup.find_all('div', class_='myContainer')
+
+    # Ensure there are at least two containers
+    if len(containers) >= 2:
+        # Select the second container
+        container = containers[1]
+
+        # Find all <a> tags within the selected container with the specified class
+        links = container.find_all('a', class_='flex items-center gap-1 px-2 hover:bg-gray-100 group gap-4 hover:-my-[1px]')
+
+        # Extract and store the href attributes in a list
+        href_list = [link.get('href') for link in links]
+
+        # Scrape and print all links from each website
+        base_url = "https://betalist.com"
+        scrape_and_print_all_details(base_url, href_list,producer)
+    else:
+        print("There are less than two 'myContainer' divs on the page.")
+
 def main():
     producer = setup_kafka_producer()
     # Initialize and start threads
@@ -207,17 +273,20 @@ def main():
     thread2 = Thread(target=scrape_producthunt, args=(producer,))   #no crowler required
     thread3 = Thread(target=scrape_sideprojectors, args=(producer,))
     thread4 = Thread(target=scrape_twitter, args=(producer,))
+    thread5 = Thread(target=betalist_scraper, args=(producer,))
     
     thread1.start()
     thread2.start()
     thread3.start()
     thread4.start()
+    thread5.start()
 
     # Wait for both threads to complete
     thread1.join()
     thread2.join()
     thread3.join()
     thread4.join()
+    thread5.join()
 
     producer.close()
 
