@@ -14,12 +14,17 @@ shutdown the kafka and zookeeper
 
 ## run scrapper
 ```bash
-# run scrapper
-cd scrapper
-# build the image
-docker build -t scrapper-image .
+# Pull the image
+docker pull pes1ug21cs364/g2-hack:scrape-products
 # run the image
-docker run --network="host" scrapper-image
+docker run --network="host" scrape-products
+```
+## run consumer
+```bash
+# Pull the product consumer
+docker pull pes1ug21cs364/g2-hack:software-consumer
+# run the image
+docker run --network="host" consumer-image
 ```
 
 ## Project Architecture
