@@ -18,6 +18,7 @@ def setup_kafka_producer():
 
 def scrape_slashdot(driver, producer):
     try:
+        driver.maximize_window()
         driver.get("https://slashdot.org/")
         time.sleep(5)
         all_element = driver.find_element(By.LINK_TEXT, "Software")
@@ -46,6 +47,7 @@ def scrape_slashdot(driver, producer):
 
 def scrape_producthunt(driver, producer):
     try:
+        driver.maximize_window()
         driver.get("https://www.producthunt.com/")
         time.sleep(5)
         all_element = driver.find_element(By.LINK_TEXT, "All")
@@ -78,22 +80,71 @@ def scrape_producthunt(driver, producer):
     finally:
         driver.quit()
 
+def scrape_sideprojectors(driver,producer):
+    try:
+        driver.maximize_window()
+        driver.get("https://www.sideprojectors.com/#/")
+        time.sleep(5)
+        ids = ["input-project-type-blog", "input-project-type-domain", "input-project-type-other"]
+
+        for id_value in ids:
+            try:
+                element = driver.find_element(By.ID, id_value)
+                element.click()
+            except:
+                continue
+
+        search_button=driver.find_element(By.XPATH, '//button[text()="Search"]')
+        search_button.click()
+
+        time.sleep(3)
+
+        while True:
+            last_height = driver.execute_script("return document.body.scrollHeight")
+            products = driver.find_elements(By.CSS_SELECTOR, "a.project-item")
+            for product in products:
+                product_name = product.find_element(By.CSS_SELECTOR, ".name").text
+                description = product.find_element(By.CSS_SELECTOR, "div.description").text
+                date_span = product.find_elements(By.CSS_SELECTOR, "div.mt-6.flex.items-center span.gray-text")[-1].text
+                product_doc = {"name": product_name, "description": description,"date": date_span}
+                producer.send('SideProjectors', value=product_doc)
+
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(5)
+
+            try:
+                next_button = driver.find_element(By.XPATH, '//button[text()="Next"]')
+                next_button.click()
+            except:
+                print("No more pages to scrape for SideProjectors.")
+                break
+
+    except Exception as e:
+        print(f"Error in scrape_slashdot: {e}")
+    finally:
+        driver.quit()
+
+
 def main():
     producer = setup_kafka_producer()
     # Creating separate WebDriver instances for each thread
     driver1 = setup_webdriver()
     driver2 = setup_webdriver()
+    driver3 = setup_webdriver()
     
     # Initialize and start threads
     thread1 = Thread(target=scrape_slashdot, args=(driver1, producer))
     thread2 = Thread(target=scrape_producthunt, args=(driver2, producer))
+    thread3 = Thread(target=scrape_sideprojectors, args=(driver3, producer))
     
     thread1.start()
     thread2.start()
+    thread3.start()
 
     # Wait for both threads to complete
     thread1.join()
     thread2.join()
+    thread3.join()
 
     producer.close()
 
