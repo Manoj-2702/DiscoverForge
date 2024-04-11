@@ -19,6 +19,7 @@ import os
 load_dotenv()
 TWITTER_USER_NAME=os.getenv("TWITTER_USER_NAME")
 TWITTER_PASSWORD=os.getenv("TWITTER_PASSWORD")
+
 def setup_webdriver():
     chrome_options = Options()   
     chrome_options.add_argument("--disable-popup-blocking")
@@ -97,18 +98,19 @@ def scrape_producthunt(producer):
 
             containers = driver.find_elements(By.CSS_SELECTOR, "div.styles_titleItem__bCaNQ")
             for container in containers:
-                product_name = container.find_element(By.TAG_NAME, "strong").text
-                full_text = container.find_element(By.CSS_SELECTOR, "div.styles_titleTaglineItem__d5Rut").text
-                parts = full_text.split("—")
-                product_description = parts[1].strip() if len(parts) > 1 else "No description"
-                topics = [topic.text for topic in container.find_elements(By.CSS_SELECTOR, "div.styles_underlinedLink__MUPq8, a.styles_underlinedLink__MUPq8")]
-                data = {"name": product_name, "description": product_description, "topics": topics}
-                # Send data to Kafka
-                producer.send('Software', value=data)
-                
-            break
-       
-    except Exception as e:  
+                try:
+                    product_name = container.find_element(By.TAG_NAME, "strong").text
+                    full_text = container.find_element(By.CSS_SELECTOR, "div.styles_titleTaglineItem__d5Rut").text
+                    parts = full_text.split("—")
+                    product_description = parts[1].strip() if len(parts) > 1 else "No description"
+                    topics = [topic.text for topic in container.find_elements(By.CSS_SELECTOR, "div.styles_underlinedLink__MUPq8, a.styles_underlinedLink__MUPq8")]
+                    data = {"name": product_name, "description": product_description, "topics": topics}
+                    producer.send('Software', value=data)   
+                except Exception as e:
+                    print(f"Error in scrape_producthunt: {e}")
+                    continue
+    except Exception as e: 
+        pass
         print(f"Error in scrape_producthunt: {e}")
 
 def scrape_sideprojectors(producer):
@@ -155,9 +157,11 @@ def scrape_sideprojectors(producer):
         # driver.quit()
 
     except Exception as e:
+        pass
         print(f"Error in scrape_slashdot: {e}")
 
-def scrape_twitter(driver, producer):
+def scrape_twitter(producer):
+    driver = setup_webdriver()
     def extract_tweets(driver, search_text):
         search_input = WebDriverWait(driver, 180).until(EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='SearchBox_Search_Input']")))
         search_input.send_keys(search_text)
@@ -191,6 +195,7 @@ def scrape_twitter(driver, producer):
         extracted_text = extract_tweets(driver, search_text)
         producer.send('twitter-llm', value=extracted_text)
     except Exception as e:
+        pass
         print(f"Error in scrape_twitter: {e}")
     finally:
         driver.quit()
@@ -198,8 +203,8 @@ def scrape_twitter(driver, producer):
 def main():
     producer = setup_kafka_producer()
     # Initialize and start threads
-    thread1 = Thread(target=scrape_slashdot, args=(producer,))
-    thread2 = Thread(target=scrape_producthunt, args=(producer,))
+    thread1 = Thread(target=scrape_slashdot, args=(producer,)) 
+    thread2 = Thread(target=scrape_producthunt, args=(producer,))   #no crowler required
     thread3 = Thread(target=scrape_sideprojectors, args=(producer,))
     thread4 = Thread(target=scrape_twitter, args=(producer,))
     

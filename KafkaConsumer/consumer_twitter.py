@@ -3,7 +3,7 @@ import json
 
 print("Setting up Kafka consumer for ProductHunt topic")
 consumer = KafkaConsumer(
-    'ProductHunt',
+    'twitter-llm',
     bootstrap_servers=['localhost:9092'],
     auto_offset_reset='earliest',
     enable_auto_commit=True,
@@ -12,4 +12,4 @@ consumer = KafkaConsumer(
 
 for message in consumer:
     data = message.value
-    print(data) 
+    print(data)
