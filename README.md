@@ -55,6 +55,7 @@ This project automates the listing of B2B software products on G2, ensuring that
 ![image](G2-hackathon.png)
 
 ### Initial Setup
+
 Comprehensive scrapers are deployed initially to perform a deep crawl of targeted sources to populate the database with existing software products. BeautifulSoup is used for static content and Selenium for dynamic content.
 
 ### Ongoing Operation
@@ -89,6 +90,10 @@ Kubernetes ensures scalable and resilient deployment of all system components.
 
 ![image](https://github.com/Manoj-2702/G2Hack/assets/92267208/4ce38d65-ebe1-4a2f-8db8-ea07ac804fc9)
 
+## Streamlit Website
+
+![image](website.png)
+
 ## Kafka Setup
 
 run this command in root directory of the project
@@ -122,12 +127,14 @@ docker build -t software-consumer .
 # run the image
 docker run --network="host" software-consumer
 ```
+
 ```bash
 # Build the product consumer
 docker build -t twitter-consumer .
 # run the image
 docker run --network="host" twitter-consumer
 ```
+
 ```bash
 # Build the product consumer
 docker build -t news-consumer .
@@ -149,6 +156,7 @@ kubectl apply -f twitter-cronjob.yaml
 
 kubectl apply -f news-cronjob.yaml
 ```
+
 ```bash
 # run the image
 kubectl get cronjobs
