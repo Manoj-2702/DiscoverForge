@@ -157,6 +157,8 @@ kubectl get pods
 
 kubectl get deployments
 ```
+## mongodb atlas clustor
+![image](https://github.com/Manoj-2702/G2Hack_TryCatchDevs/assets/92267208/a5e87fd9-2b8c-4b7d-a45e-50089ddbfaca)
 
 ## Kubectl
 ![image](https://github.com/Manoj-2702/G2Hack_TryCatchDevs/assets/92267208/ee4d1dd8-9ad0-4855-8a27-bb148feedcba)
