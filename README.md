@@ -29,7 +29,7 @@ listed on G2 (this could be in a database or a CSV file).
 - **Description:** These are the primary sources where detailed and technical data about software products can be found. Key sources include software directories, official product pages, and industry-specific news portals.
 - **Scraping Techniques:** Utilize BeautifulSoup for parsing HTML content from static pages and Selenium for interacting with JavaScript-driven dynamic web pages to extract critical data about software releases and updates.
 - 
-###News Websites and Social Media
+### News Websites and Social Media
 - **Purpose:** To capture press releases, news articles, and social media posts that announce or discuss the launch of new B2B software products.
 - **Approach:** Deploy custom crawlers through tech news portals like TechCrunch, Wired, and social media platforms such as Twitter and LinkedIn. These crawlers use Selenium to mimic human browsing patterns, ensuring timely and accurate data collection.
 
