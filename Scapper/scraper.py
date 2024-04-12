@@ -421,27 +421,16 @@ def scrape_techpoint(producer):
 
 
 
-    def main_techpoint():
-        url_queue = Queue(maxsize=50)  # Limit queue size if memory management is a concern
-        producer_thread = threading.Thread(target=producer, args=(url_queue,))
-        consumer_thread = threading.Thread(target=consumer, args=(url_queue,))
-
-        producer_thread.start()
-        consumer_thread.start()
-
-        # Set a timer to stop the threads after 20 minutes
-        timer = threading.Timer(1200, stop_threads)  # 1200 seconds = 20 minutes
-        timer.start()
-
-        producer_thread.join()
-        url_queue.join()  # Ensure that all URLs are processed
-        consumer_thread.join()
-
-    def stop_threads():
-        global continue_running
-        continue_running = False
-
-    main_techpoint()
+    url_queue = Queue(maxsize=50)  # Limit queue size if memory management is a concern
+    producer_thread = threading.Thread(target=producer, args=(url_queue,))
+    consumer_thread = threading.Thread(target=consumer, args=(url_queue,))
+    
+    producer_thread.start()
+    consumer_thread.start()
+    
+    producer_thread.join()
+    url_queue.join()  # Ensure that all URLs are processed
+    consumer_thread.join()
 
 
 def main():
