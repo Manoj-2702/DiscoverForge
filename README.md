@@ -1,10 +1,10 @@
 # G2Hack
 
-##Overview
+## Overview
 
 This project automates the listing of B2B software products on G2, ensuring that new software is promptly and efficiently added to the G2 marketplace. By leveraging advanced web scraping techniques, real-time data streaming, and automated workflows, this system maximizes the visibility and accessibility of new software products, particularly in regions where G2 has low penetration.
 
-##Problem Statement
+## Problem Statement
 G2 aims to list every B2B software product as soon as it becomes available. However, in many geographical regions, G2's visibility is low, leading to delays in software listings. This solution identifies new software products not currently listed on G2 and adds them to the platform efficiently.
 
 
