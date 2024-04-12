@@ -342,6 +342,107 @@ def betalist_scraper(producer):
     except requests.RequestException as e:
         print(f"Failed to load page {url}: {e}")
 
+
+def scrape_techpoint(producer):
+
+
+    def producer(url_queue):
+        driver = setup_webdriver()
+        main_url = 'https://techpoint.africa/'
+        driver.get(main_url)
+        wait = WebDriverWait(driver, 10)
+        attempts = 0
+        max_attempts = 3
+
+        try:
+            while True:
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(3)  # Allow time for page to load and "Load More" button to appear
+                article_links = driver.find_elements(By.CSS_SELECTOR, "div.ct-div-block a.post-excerpt")
+                for link in article_links:
+                    href = link.get_attribute('href')
+                    if href:
+                        url_queue.put(href)  # Add the URL to the queue
+
+                try:
+                    attempts = 0 
+                    load_more_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Load More')]")))
+                    driver.execute_script("arguments[0].scrollIntoView();", load_more_button)
+                    load_more_button.click()
+                     # Reset attempts after a successful click
+                    time.sleep(3)  # Allow time for new content to load
+                except Exception as e:
+                    attempts += 1
+                    print(f"Attempt {attempts}: Failed to find 'Load More' button oin techpoint. Trying again...")
+                    if attempts >= max_attempts:
+                        print("No more 'Load More' button found after multiple attempts. Ending production.")
+                        break
+                    time.sleep(3)  # Wait before trying to find the 'Load More' button again
+        finally:
+            driver.quit()
+            url_queue.put(None)  # Signal that no more URLs will be produced
+
+    def consumer(url_queue):
+        processed_urls = set()
+        while True:
+            url = url_queue.get()
+            if url is None:
+                url_queue.task_done()
+                break  # If None is fetched, no more URLs to process
+            if url not in processed_urls:
+                try:
+                    response = requests.get(url)
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    ct_div_blocks = soup.find_all('div', class_='ct-div-block')
+                    data_list = []
+                    h1s = soup.find_all('h1')  # Fetching all h1 tags
+                    for h1 in h1s:
+                        data_list.append(h1.text.strip())  # Adding h1 text to the data list
+                    for block in ct_div_blocks:
+                        ps = block.find_all('p')
+                        uls = block.find_all('ul')
+                        for p in ps:
+                            if "Next" not in p.text and "Previous" not in p.text:
+                                data_list.append(p.text.strip())
+                        for ul in uls:
+                            lis = ul.find_all('li')
+                            for li in lis:
+                                if "Next" not in li.text and "Previous" not in li.text:
+                                    data_list.append(li.text.strip())
+                    data_string = " ".join(data_list)  # Combine list items into one string
+                    #print(f"Data from  {data_string}")  # Print the combined string
+                    producer.send('news', data_string)
+                    processed_urls.add(url)
+                except requests.RequestException as e:
+                    print(f"Failed to retrieve {url}: {str(e)}")
+                url_queue.task_done()
+
+
+
+    def main_tecpoint():
+        url_queue = Queue(maxsize=50)  # Limit queue size if memory management is a concern
+        producer_thread = threading.Thread(target=producer, args=(url_queue,))
+        consumer_thread = threading.Thread(target=consumer, args=(url_queue,))
+
+        producer_thread.start()
+        consumer_thread.start()
+
+        # Set a timer to stop the threads after 20 minutes
+        timer = threading.Timer(1200, stop_threads)  # 1200 seconds = 20 minutes
+        timer.start()
+
+        producer_thread.join()
+        url_queue.join()  # Ensure that all URLs are processed
+        consumer_thread.join()
+
+    def stop_threads():
+        global continue_running
+        continue_running = False
+
+    if __name__ == "__main__":
+        main_techpoint()
+
+
 def main():
     producer = setup_kafka_producer()
     ##TODO :  Get full scrapper status from Mongo
@@ -351,12 +452,14 @@ def main():
     thread3 = Thread(target=scrape_sideprojectors, args=(producer,))
     thread4 = Thread(target=scrape_twitter, args=(producer,))
     thread5 = Thread(target=betalist_scraper, args=(producer,))
+    thread6 = Thread(target=scrape_techpoint, args=(producer,))
     
     thread1.start()
     thread2.start()
     thread3.start()
     thread4.start()
     thread5.start()
+    thread6.start()
 
     # Wait for both threads to complete
     thread1.join()
@@ -364,6 +467,7 @@ def main():
     thread3.join()
     thread4.join()
     thread5.join()
+    thread6.start()
 
     producer.close()
 
