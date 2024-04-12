@@ -13,10 +13,105 @@ import requests
 from bs4 import BeautifulSoup
 import threading
 from threading import Thread
+from collections import Counter
+from urllib.parse import urljoin
 
 def setup_kafka_producer():
     # Initialize Kafka producer with bootstrap servers
     return KafkaProducer(bootstrap_servers=['localhost:9092'], value_serializer=lambda x: json.dumps(x).encode('utf-8'))
+
+def scrape_producthunt(producer):
+
+    def scrape_base_page(url):
+        try:
+            # Send a GET request to the webpage
+            response = requests.get(url)
+            response.raise_for_status()  # Raise an exception for HTTP errors
+
+            # Parse the HTML content of the page with BeautifulSoup
+            soup = BeautifulSoup(response.text, 'html.parser')
+        except requests.RequestException as e:
+            print(f"Failed to retrieve data from {url}: {e}")
+            return []
+
+        # List to store the collected hrefs
+        collected_hrefs = []
+
+        # Find all div elements with the specific class
+        divs = soup.find_all('div', class_='styles_item__Dk_nz my-2 flex flex-1 flex-row gap-2 py-2 sm:gap-4')
+        for div in divs:
+            # Find all anchor tags within each div
+            anchor_tags = div.find_all('a')
+            for a in anchor_tags:
+                href = a.get('href')  # Get the href attribute
+                if href and '/posts/' in href:
+                    full_url = urljoin(url, href)
+                    collected_hrefs.append(full_url)
+
+        return collected_hrefs
+
+    def extract_additional_data(post_urls):
+        base_url = 'https://www.producthunt.com'
+        posts_data = []
+        counter = Counter(post_urls)
+
+        # Create a new list, removing one occurrence of each duplicate
+        new_post_urls = []
+        for url in post_urls:
+            if counter[url] > 1:
+                counter[url] -= 1
+            else:
+                new_post_urls.append(url)
+
+        post_urls = new_post_urls
+
+        for url in post_urls:
+            try:
+                post_response = requests.get(url)
+                post_response.raise_for_status()
+                
+                # Parse the HTML content of the post page
+                post_soup = BeautifulSoup(post_response.text, 'html.parser')
+                
+                # Extract the h1 text
+                post_h1 = post_soup.find('h1').text if post_soup.find('h1') else "No H1 tag found"
+                
+                # Extract the text from divs with the specific class
+                target_divs = post_soup.find_all('div', class_='styles_htmlText__eYPgj text-16 font-normal text-dark-grey')
+                div_text = ' '.join(div.text for div in target_divs)
+                
+                # Store the extracted data in the dictionary
+                data = {'url': url, 'name': post_h1, 'description': div_text}
+                
+                # Send the data to Kafka
+                #producer.send('Software', value=data)
+                print(post_h1)
+                print(url)
+                print(div_text)
+            except requests.RequestException as e:
+                print(f"Failed to retrieve or process data from {url}: {e}")
+                continue  # Skip this URL and continue with the next one
+
+            posts_data.append(data)
+
+        return posts_data
+
+    # URL of the webpage you want to scrape
+    base_url = 'https://www.producthunt.com/all'
+
+    # First, scrape the base page to get all relevant hrefs
+    post_hrefs = scrape_base_page(base_url)
+
+    # Then, extract additional data using the collected hrefs
+    posts_info = extract_additional_data(post_hrefs)
+
+    # Output the extracted data
+    for post in posts_info:
+        print(f"URL: {post['url']}")
+        print(f"Name: {post['name']}")
+        print(f"Description: {post['description']}")
+        print("-" * 80)  # Print a separator line
+
 
 
 def crawl_betalist(startups_and_links_file,producer):
@@ -253,18 +348,20 @@ def sideproject_crawler(producer,sideprojects_info_file):
 
 def main():
     producer = setup_kafka_producer()
-    
-    
 
     thread1 = Thread(target=sideproject_crawler, args=(producer,'Products.product_info3.csv',)) 
     thread2 = Thread(target=crawl_betalist, args=('output_sites2.json',producer,))   
+    thread3 = Thread(target=scrape_producthunt, args=(producer,))  
+    
 
     thread1.start()
     thread2.start()
+    thread3.start()
 
     # Wait for both threads to complete
     thread1.join()
     thread2.join()
+    thread3.join()
     
     producer.close()
 
