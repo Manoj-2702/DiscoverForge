@@ -217,92 +217,67 @@ def scrape_twitter(producer):
         driver.quit()
 
 def betalist_scraper(producer):
-
     topics_data = []
-
-    def scrape_and_print_all_details(base_url, href_list,producer):
+    
+    def scrape_and_print_all_details(base_url, href_list, producer):
         for href in href_list:
-            # Construct the full URL
             full_url = urljoin(base_url, href)
-            
-
-            # Send a GET request to the full URL
-            response = requests.get(full_url)
-            response.raise_for_status()  # Raise an HTTPError for bad responses
+            attempt_count = 0
+            while attempt_count < 3:  # Retry up to 3 times
+                try:
+                    # Send a GET request to the full URL
+                    response = requests.get(full_url)
+                    response.raise_for_status()  # Raise an HTTPError for bad responses
+                    break
+                except requests.RequestException as e:
+                    attempt_count += 1
+                    print(f"Failed to fetch {full_url}, attempt {attempt_count}. Error: {e}")
+                    time.sleep(2)  # Wait 2 seconds before retrying
+            if attempt_count == 3:
+                print(f"Failed to process {full_url} after multiple attempts.")
+                continue  # Skip this URL
 
             # Parse the HTML content of the page
             soup = BeautifulSoup(response.text, 'html.parser')
-
-            # Find all <div> tags with class 'startupCard__details'
             details_divs = soup.find_all('div', class_='startupCard__details')
             startups = []
-
-            # Extract and print the name and description from each <div>
             for div in details_divs:
-   
                 name_tag = div.find('a', class_='block whitespace-nowrap text-ellipsis overflow-hidden font-medium')
-                if name_tag:
-                    name = name_tag.text.strip()
-                    href = name_tag.get('href')  # Getting the href attribute
-                else:
-                    name = "Name not found"
-                    href = "Href not found"  # Default value if name_tag is not found
-
-                # Find the <div> tag for description
-                description_div = div.find('a', class_='block text-gray-500 dark:text-gray-400')  # Corrected to find <div> not <a>
+                name = name_tag.text.strip() if name_tag else "Name not found"
+                href = name_tag.get('href') if name_tag else "Href not found"
+                description_div = div.find('a', class_='block text-gray-500 dark:text-gray-400')
                 description = description_div.get_text(strip=True) if description_div else "Description not found"
-
-                startups.append({"text": name, "href": href})
-
+                
+                startups.append({"name": name, "href": href})
                 message = {'name': name, 'description': description, 'href': href}
-            
-                # Send the message to the Kafka topic
+                
                 producer.send('Software', message)
                 producer.flush()
-                
-            topics_data.append({
-                "link_topic": full_url,
-                "startups": startups
-            })
-            # print(topics_data)
 
-            # Write the updated data to a JSON file
+            topics_data.append({"link_topic": full_url, "startups": startups})
+        
+        # Writing data to JSON file
+        try:
             with open('output_sites2.json', 'w') as f:
                 json.dump(topics_data, f, indent=4)
+        except IOError as e:
+            print(f"Error writing to file: {e}")
 
-
-
-    # URL of the page to scrape
     url = "https://betalist.com/topics"
-
-    # Send a GET request to the URL
-    response = requests.get(url)
-
-    # Parse the HTML content
-    soup = BeautifulSoup(response.text, 'html.parser')
-
-    # Find all <div> tags with class 'myContainer'
-    containers = soup.find_all('div', class_='myContainer')
-
-    # Ensure there are at least two containers
-    if len(containers) >= 2:
-        # Select the second container
-        
-        container = containers[1]
-
-        # Find all <a> tags within the selected container with the specified class
-        links = container.find_all('a', class_='flex items-center gap-1 px-2 hover:bg-gray-100 group gap-4 hover:-my-[1px]')
-
-        # Extract and store the href attributes in a list
-        href_list = [link.get('href') for link in links]
-
-        # Scrape and print all links from each website
-        base_url = "https://betalist.com"
-        
-
-        scrape_and_print_all_details(base_url, href_list,producer)
-    else:
-        print("There are less than two 'myContainer' divs on the page.")
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser')
+        containers = soup.find_all('div', class_='myContainer')
+        if len(containers) >= 2:
+            container = containers[1]
+            links = container.find_all('a', class_='flex items-center gap-1 px-2 hover:bg-gray-100 group gap-4 hover:-my-[1px]')
+            href_list = [link.get('href') for link in links]
+            scrape_and_print_all_details("https://betalist.com", href_list, producer)
+        else:
+            print("There are less than two 'myContainer' divs on the page.")
+    except requests.RequestException as e:
+        print(f"Failed to load page {url}: {e}")
 
 def main():
     producer = setup_kafka_producer()
