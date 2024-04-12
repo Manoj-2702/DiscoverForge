@@ -1,11 +1,11 @@
-# G2Hack
+# G2 Hackathon
 
 ## Overview
 
 This project automates the listing of B2B software products on G2, ensuring that new software is promptly and efficiently added to the G2 marketplace. By leveraging advanced web scraping techniques, real-time data streaming, and automated workflows, this system maximizes the visibility and accessibility of new software products, particularly in regions where G2 has low penetration.
 
 ## Problem Statement
-G2 is the largest software marketplace in the world, with over 165,000 listed products and
+1. G2 is the largest software marketplace in the world, with over 165,000 listed products and
 real reviews. Our mission is to help every software buyer make informed purchasing
 decisions. To achieve this, we want all B2B software products to be listed on G2 as soon as
 they become generally available. While this is common practice in North America, Asia,
