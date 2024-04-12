@@ -47,7 +47,8 @@ def process_message(message_data):
             print(f"Product not found in G2: {product_name}")
             document = {
                 "product_name": product_name,
-                "timestamp": datetime.now()
+                "timestamp": datetime.now(),
+                "desc": message_data.get('description'),
             }
             unavailable_products_collection.insert_one(document)
         else:
