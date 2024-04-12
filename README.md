@@ -13,6 +13,13 @@ G2 aims to list every B2B software product as soon as it becomes available. Howe
 -  **Global Reach:** Capture and list software launches worldwide, especially from underrepresented regions.
 -  **Technological Innovation:** Utilize modern technologies including web scraping, real-time data streams, and cloud-native services to maintain an efficient workflow.
 
+## Technology Stack
+
+- **Web Scraping:** BeautifulSoup, Selenium
+- **Data Streaming:** Apache Kafka
+- **Data Storage and Management:** MongoDB, Docker, Kubernetes
+- **APIs and Advanced Processing:** G2 API, Large Language Models (LLMs)
+
 
 
 
