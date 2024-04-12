@@ -108,17 +108,52 @@ shutdown the kafka and zookeeper
 ## run scrapper
 
 ```bash
-# Pull the image
-docker pull pes1ug21cs364/g2-hack:scrape-products
+# Build the image
+docker build -t scrape-products .
 # run the image
 docker run --network="host" scrape-products
 ```
 
-## run consumer
+## run consumers
 
 ```bash
-# Pull the product consumer
-docker pull pes1ug21cs364/g2-hack:software-consumer
+# Build the product consumer
+docker build -t software-consumer .
 # run the image
-docker run --network="host" consumer-image
+docker run --network="host" software-consumer
+```
+```bash
+# Build the product consumer
+docker build -t twitter-consumer .
+# run the image
+docker run --network="host" twitter-consumer
+```
+```bash
+# Build the product consumer
+docker build -t news-consumer .
+# run the image
+docker run --network="host" news-consumer
+```
+
+## create job
+
+```bash
+# Build the product consumer
+kubectl apply -f kafka-zoopkeeper-deployment.yaml
+
+kubectl apply -f scrape-products-cronjob.yaml
+
+kubectl apply -f product-cronjob.yaml
+
+kubectl apply -f twitter-cronjob.yaml
+
+kubectl apply -f news-cronjob.yaml
+```
+```bash
+# run the image
+kubectl get cronjobs
+
+kubectl get pods
+
+kubectl get deployments
 ```
