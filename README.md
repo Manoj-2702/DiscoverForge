@@ -165,3 +165,7 @@ kubectl get pods
 
 kubectl get deployments
 ```
+
+## Kubectl
+![image](https://github.com/Manoj-2702/G2Hack_TryCatchDevs/assets/92267208/ee4d1dd8-9ad0-4855-8a27-bb148feedcba)
+
