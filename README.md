@@ -52,7 +52,7 @@ This project automates the listing of B2B software products on G2, ensuring that
 
 ## System Architecture
 
-![System Architecture](G2 hackathon.png)
+![image](G2 hackathon.png)
 
 ###Initial Setup
 Comprehensive scrapers are deployed initially to perform a deep crawl of targeted sources to populate the database with existing software products. BeautifulSoup is used for static content and Selenium for dynamic content.
