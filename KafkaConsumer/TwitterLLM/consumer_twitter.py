@@ -98,7 +98,7 @@ def main():
     )
     with ThreadPoolExecutor(max_workers=3) as executor:
         for message in consumer:
-            print(f"Received message: {message.value.decode('utf-8')}")
+            # print(f"Received message: {message.value.decode('utf-8')}")
             executor.submit(process_product_info, message.value.decode('utf-8'))
 
 if __name__ == "__main__":

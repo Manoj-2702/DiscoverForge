@@ -1,4 +1,4 @@
-from asyncio import Queue
+from queue import Queue
 import threading
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -53,6 +53,7 @@ def setup_kafka_producer():
     return KafkaProducer(bootstrap_servers=['localhost:9092'], value_serializer=lambda x: json.dumps(x).encode('utf-8'))
 
 def scrape_slashdot(producer):
+    print("Scraping Slashdot")
     try:
         driver = setup_webdriver()
         # driver.maximize_window()
@@ -96,7 +97,7 @@ def scrape_slashdot(producer):
 
 
 def scrape_producthunt(producer):
-
+    print("Scraping Product Hunt")
     def scrape_base_page(url):
         try:
             # Send a GET request to the webpage
@@ -179,6 +180,7 @@ def scrape_producthunt(producer):
        
 
 def scrape_sideprojectors(producer):
+    print("Scraping SideProjectors")
     try:
         driver = setup_webdriver()
         driver.maximize_window()
@@ -227,63 +229,63 @@ def scrape_sideprojectors(producer):
 
 
 def scrape_twitter(producer):
+    print("Scraping Twitter")
+    """Function to log into Twitter and scrape tweets based on a hashtag."""
     driver = setup_webdriver()
-    def extract_tweets(driver, search_text):
-        search_input = WebDriverWait(driver, 180).until(EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='SearchBox_Search_Input']")))
-        search_input.send_keys(search_text)
-        search_input.send_keys(Keys.ENTER)
-        time.sleep(5)
+    try:
+        # Navigating to Twitter's login page
+        driver.get("https://twitter.com/login")
+        time.sleep(3)  # Wait to ensure the page is fully loaded
 
-        # parent_divs = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'div.css-175oi2r.r-1igl3o0.r-qklmqi.r-1adg3ll.r-1ny4l3l')))
-        extracted_text_list = []
+        # Log in process
+        username_input = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.NAME, "text")))
+        username_input.send_keys(TWITTER_USER_NAME)
+        print(TWITTER_USER_NAME)
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[text()='Next']"))).click()
+        
+        password_input = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.NAME, "password")))
+        password_input.send_keys(TWITTER_PASSWORD)
+        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[text()='Log in']"))).click()
+
+        # Wait for home page to load by checking presence of Home timeline
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'div[data-testid="primaryColumn"]')))
+
+        # Perform search
+        search_input = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='SearchBox_Search_Input']")))
+        search_input.send_keys("#b2bsoftware")
+        search_input.send_keys(Keys.ENTER)
+        time.sleep(5)  # Wait for search results to load
+        
+        # Extract tweets
+        tweets = []
         last_height = driver.execute_script("return document.documentElement.scrollHeight")
         while True:
-            last_height = driver.execute_script("return document.documentElement.scrollHeight")
-            while True:
-                driver.execute_script("window.scrollTo(0, document.documentElement.scrollHeight);")
-                time.sleep(5)
-                new_height = driver.execute_script("return document.documentElement.scrollHeight")
-                if new_height == last_height:
-                    break
-                last_height = new_height
-            containers= driver.find_elements(By.CSS_SELECTOR, '[data-testid="tweet"]')
-            for container in containers:
-                try:
-                    extracted_text_list.append(container.text)
-                except Exception as e:
-                    continue
+            driver.execute_script("window.scrollTo(0, document.documentElement.scrollHeight);")
+            time.sleep(3)
+            new_height = driver.execute_script("return document.documentElement.scrollHeight")
+            if new_height == last_height:
+                break
+            last_height = new_height
+        print("Scraping tweets")
+        tweet_elements = driver.find_elements(By.CSS_SELECTOR, '[data-testid="tweet"]')
+        for tweet in tweet_elements:
+            print("Tweets",tweet.text)
+            tweets.append(tweet.text)
 
-            return '\n\n'.join(extracted_text_list)
+        # Printing first 5 tweets for brevity
+        for tweet in tweets[:]:
+            
+            producer.send('x-llm', tweet)
+            producer.flush()
 
-    try:
-        driver.maximize_window()
-        driver.get("https://twitter.com/login")
-        time.sleep(5)
-
-        email_input = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "text")))
-        email_input.send_keys(TWITTER_USER_NAME)
-
-        next_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[text()='Next']")))
-        next_button.click()
-
-        password_input = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "password")))
-        password_input.send_keys(TWITTER_PASSWORD)
-
-        button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '[data-testid="LoginForm_Login_Button"]')))
-        button.click()
-
-        search_text = "#generalavailability"
-        extracted_text = extract_tweets(driver, search_text)
-        producer.send('x-llm', value=extracted_text)
     except Exception as e:
-        pass
         print(f"Error in scrape_twitter: {e}")
     finally:
         driver.quit()
 
 def betalist_scraper(producer):
     topics_data = []
-    
+    print("Scraping Betalist")
     def scrape_and_print_all_details(base_url, href_list, producer):
         for href in href_list:
             full_url = urljoin(base_url, href)
@@ -347,7 +349,7 @@ def betalist_scraper(producer):
 
 def scrape_techpoint(producer):
 
-
+    print("Scraping Techpoint Africa")
     def producer(url_queue):
         driver = setup_webdriver()
         main_url = 'https://techpoint.africa/'
@@ -457,7 +459,7 @@ def main():
     thread3.join()
     thread4.join()
     thread5.join()
-    thread6.start()
+    thread6.join()
 
     producer.close()
 
