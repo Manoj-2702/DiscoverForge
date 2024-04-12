@@ -18,7 +18,7 @@ unavailable_products_collection = db.unavailableProducts
 def list_products_google(msgData):
     genai.configure(api_key = google_token)
     model = genai.GenerativeModel('gemini-pro')
-    response = model.generate_content(f"""{msgData} \n Imagine a digital assistant meticulously analyzing a diverse collection of announcements related to the launch of new products and services in various industries. This assistant is tasked with identifying and categorizing each product or service mentioned, discerning whether each one represents a fresh market entry or an update to an existing offering. The goal is to compile this information into a straightforward, accessible format. Specifically, the assistant is required to present its findings as a list, focusing solely on the names of these products or services, neatly organized into an array. The array should exclusively contain the names, clearly distinguishing between novel introductions and updates to pre-existing entities, thus providing a clear, concise overview of the recent developments highlighted in the announcements.  Give the output in a json format which gives the product name and the status of the same whether its a new product or just a update to the existing product. The status should either be New Product or Update to existing product.""")
+    response = model.generate_content(f"""{msgData} \n Imagine a digital assistant meticulously analyzing a diverse collection of announcements related to the launch of new products and services in various industries. This assistant is tasked with identifying and categorizing each product or service mentioned, discerning whether each one represents a fresh market entry or an update to an existing offering. The goal is to compile this information into a straightforward, accessible format. Specifically, the assistant is required to present its findings as a list, focusing solely on the names of these products or services, neatly organized into an array. The array should exclusively contain the names, clearly distinguishing between novel introductions and updates to pre-existing entities, thus providing a clear, concise overview of the recent developments highlighted in the announcements. The naming should be in this format. Status and Product_Name. Give the output in a json format which gives the product name and the status of the same whether its a new product or just a update to the existing product. The status should either be New Product or Update to existing product. """)
 
     return response.text
 
@@ -63,13 +63,17 @@ def list_products(api_token, filter_name=None):
 
 def process_message(message_data):
     x=list_products_google(message_data)
-    with open("products.json", 'w') as file:
-        json.dump(x, file, indent=4)
-    with open("products.json", 'r') as file:
-        products = json.load(file)
+    try:
+        # Try to load it as JSON if it's a string (assuming json_response might be a string)
+        products = json.loads(x)
+    except json.JSONDecodeError:
+        # If json_response is already a dictionary
+        products = x
     for product in products:
-        if product['status'] == 'New Product':  # Assuming the correct status is "new product"
-            product_name = product['product_name']
+        product_name=None
+        if isinstance(product, dict):
+            if product.get("Status") == "New Product":  # Assuming the correct status is "new product"
+                product_name = product.get('Product Name')
         if product_name:
             g2_response = list_products(api_token, filter_name=product_name)
             if g2_response and not g2_response.get('data'):

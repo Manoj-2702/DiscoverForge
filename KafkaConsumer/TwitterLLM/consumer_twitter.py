@@ -68,13 +68,17 @@ def list_products_google(msgData):
 
 def process_message(message_data):
     x=list_products_google(message_data)
-    with open("products.json", 'w') as file:
-        json.dump(x, file, indent=4)
-    with open("products.json", 'r') as file:
-        products = json.load(file)
+    try:
+        # Try to load it as JSON if it's a string (assuming json_response might be a string)
+        products = json.loads(x)
+    except json.JSONDecodeError:
+        # If json_response is already a dictionary
+        products = x
     for product in products:
-        if product['status'] == 'New Product':  # Assuming the correct status is "new product"
-            product_name = product['product_name']
+        product_name=None
+        if isinstance(product, dict):
+            if product.get("Status") == "New Product":  # Assuming the correct status is "new product"
+                product_name = product.get('Product Name')
         if product_name:
             g2_response = list_products(api_token, filter_name=product_name)
             if g2_response and not g2_response.get('data'):
