@@ -2,9 +2,18 @@ import json
 from dotenv import load_dotenv
 from os import getenv
 import google.generativeai as genai
+import requests
+from pymongo import MongoClient
+from datetime import datetime
 
 load_dotenv()
+api_token = getenv("G2_API_KEY")
+mongo_conn_string = getenv("MONGO_CONN_STRING")
 google_token=getenv("GOOGLE_API_KEY")
+
+client = MongoClient(mongo_conn_string)
+db = client.g2hack
+unavailable_products_collection = db.unavailableProducts
 
 def list_products_google(msgData):
     genai.configure(api_key = google_token)
@@ -36,7 +45,42 @@ Improved Text Analytics In BigQuery: #Search Features Now GA https://cyberpogo.c
 
 Improved Text Analytics In BigQuery: #Search Features Now GA https://globalcloudplatforms.com/2022/11/25/improved-text-analytics-in-bigquery-search-features-now-ga/  #indexing #query #generalavailability #bigquery #dataanalytics #googlecloud
 """
+def list_products(api_token, filter_name=None):
+    url = "https://data.g2.com/api/v1/products"
+    headers = {
+        "Authorization": f"Token token={api_token}",
+        "Content-Type": "application/vnd.api+json"
+    }
+    params = {'filter[name]': filter_name} if filter_name else {}
 
-x=list_products_google(msg)
-with open("products.json", 'w') as file:
-    json.dump(x, file, indent=4)
+    response = requests.get(url, headers=headers, params=params)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print(f"Failed to fetch products, status code: {response.status_code}")
+        return None
+    
+
+def process_message(message_data):
+    x=list_products_google(message_data)
+    with open("products.json", 'w') as file:
+        json.dump(x, file, indent=4)
+    with open("products.json", 'r') as file:
+        products = json.load(file)
+    for product in products:
+        if product['status'] == 'New Product':  # Assuming the correct status is "new product"
+            product_name = product['product_name']
+        if product_name:
+            g2_response = list_products(api_token, filter_name=product_name)
+            if g2_response and not g2_response.get('data'):
+                print(f"Product not found in G2: {product_name}")
+                document = {
+                    "product_name": product_name,
+                    "timestamp": datetime.now()
+                }
+                unavailable_products_collection.insert_one(document)
+            else:
+                print(f"Product found in G2: {product_name}")
+
+
+process_message(msg)

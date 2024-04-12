@@ -75,7 +75,6 @@ def process_message(message_data):
     for product in products:
         if product['status'] == 'New Product':  # Assuming the correct status is "new product"
             product_name = product['product_name']
-        product_name = message_data.get('name')
         if product_name:
             g2_response = list_products(api_token, filter_name=product_name)
             if g2_response and not g2_response.get('data'):
