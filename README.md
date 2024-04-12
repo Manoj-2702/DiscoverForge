@@ -9,9 +9,9 @@ G2 aims to list every B2B software product as soon as it becomes available. Howe
 
 ## Project Goals
 
-- # Fast and Efficient Listings: Automate the detection and listing of new software products to ensure real-time updates.
-- # Global Reach: Capture and list software launches worldwide, especially from underrepresented regions.
-- #Technological Innovation: Utilize modern technologies including web scraping, real-time data streams, and cloud-native services to maintain an efficient workflow.
+- **Fast and Efficient Listings:** Automate the detection and listing of new software products to ensure real-time updates.
+-  **Global Reach:** Capture and list software launches worldwide, especially from underrepresented regions.
+-  **Technological Innovation:** Utilize modern technologies including web scraping, real-time data streams, and cloud-native services to maintain an efficient workflow.
 
 
 
