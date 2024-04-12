@@ -197,9 +197,9 @@ def crawl_betalist(startups_and_links_file,producer):
                 full_url = f"{base_url}{href}"
                 startup_details = scrape_details_from_urls([full_url])
                 for startup in startup_details:
-                    print(f"text: {detail['text']}")
-                    print(f"Title: {startup['title']}")
-                    print(f"Description: {startup['description']}")
+                    #print(f"text: {detail['text']}")
+                    #print(f"Title: {startup['title']}")
+                    #print(f"Description: {startup['description']}")
                     data = {
                         "text": detail['text'],
                         "title": startup['title'],
