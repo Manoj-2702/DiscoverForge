@@ -94,6 +94,9 @@ Kubernetes ensures scalable and resilient deployment of all system components.
 
 ![image](website.png)
 
+```bash
+https://trycatchdevs.streamlit.app/
+```
 ## Kafka Setup
 
 run this command in root directory of the project
