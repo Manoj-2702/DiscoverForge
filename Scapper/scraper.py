@@ -209,7 +209,7 @@ def scrape_twitter(producer):
 
         search_text = "#generalavailability"
         extracted_text = extract_tweets(driver, search_text)
-        producer.send('twitter-llm', value=extracted_text)
+        producer.send('x-llm', value=extracted_text)
     except Exception as e:
         pass
         print(f"Error in scrape_twitter: {e}")

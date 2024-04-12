@@ -30,7 +30,7 @@ def scrape_twitter(producer):
         search_input.send_keys(search_text)
         search_input.send_keys(Keys.ENTER)
 
-        parent_divs = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'div.css-175oi2r.r-1igl3o0.r-qklmqi.r-1adg3ll.r-1ny4l3l')))
+        parent_divs = WebDriverWait(driver, 20).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'div.css-175oi2r.r-1igl3o0.r-qklmqi.r-1adg3ll.r-1ny4l3l')))
         extracted_text_list = []
         for parent_div in parent_divs:
             nested_div = parent_div.find_element(By.CSS_SELECTOR, 'div.css-1rynq56.r-8akbws.r-krxsd3.r-dnmrzs.r-1udh08x.r-bcqeeo.r-qvutc0.r-37j5jr.r-a023e6.r-rjixqe.r-16dba41.r-bnwqim')
@@ -56,7 +56,8 @@ def scrape_twitter(producer):
 
         search_text = "#generalavailability"
         extracted_text = extract_tweets(driver, search_text)
-        producer.send('twitter-llm', value=extracted_text)
+        print(extracted_text)
+        producer.send('x-llm', value=extracted_text)
     except Exception as e:
         pass
         print(f"Error in scrape_twitter: {e}")
