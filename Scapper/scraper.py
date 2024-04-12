@@ -1,3 +1,5 @@
+from asyncio import Queue
+import threading
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -21,7 +23,7 @@ TWITTER_PASSWORD=os.getenv("TWITTER_PASSWORD")
 
 def setup_webdriver():
 
-    ChromeDriverManager().clear_cache()
+    # ChromeDriverManager().clear_cache()
     chrome_options = Options()   
     chrome_options.add_argument("--disable-popup-blocking")
     chrome_options.add_argument("--headless")
@@ -419,7 +421,7 @@ def scrape_techpoint(producer):
 
 
 
-    def main_tecpoint():
+    def main_techpoint():
         url_queue = Queue(maxsize=50)  # Limit queue size if memory management is a concern
         producer_thread = threading.Thread(target=producer, args=(url_queue,))
         consumer_thread = threading.Thread(target=consumer, args=(url_queue,))
@@ -439,8 +441,7 @@ def scrape_techpoint(producer):
         global continue_running
         continue_running = False
 
-    if __name__ == "__main__":
-        main_techpoint()
+    main_techpoint()
 
 
 def main():
