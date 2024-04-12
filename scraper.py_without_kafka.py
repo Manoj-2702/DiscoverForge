@@ -1,13 +1,67 @@
+from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
 from selenium.webdriver.edge.service import Service
 from selenium.webdriver.common.by import By
 import time
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.keys import Keys
+from dotenv import load_dotenv
+import os
+from kafka import KafkaProducer
+load_dotenv()
+TWITTER_USER_NAME=os.getenv("TWITTER_USER_NAME")
+TWITTER_PASSWORD=os.getenv("TWITTER_PASSWORD")
 
 def setup_webdriver():
-    # Setup WebDriver with Edge
-    service = Service("edgedriver_win64/msedgedriver.exe")
-    return webdriver.Edge(service=service)
+    # chrome_options = Options()   
+    # chrome_options.add_argument("--headless")
+    # chrome_options.add_argument("--disable-gpu")
+    # chrome_options.add_argument("--no-sandbox")
+    # chrome_options.add_argument("--disable-dev-shm-usage")
+    service = Service(ChromeDriverManager().install())
+    return webdriver.Chrome(service=service)
 
+def scrape_twitter(producer):
+    driver = setup_webdriver()
+    def extract_tweets(driver, search_text):
+        search_input = WebDriverWait(driver, 180).until(EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='SearchBox_Search_Input']")))
+        search_input.send_keys(search_text)
+        search_input.send_keys(Keys.ENTER)
+
+        parent_divs = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'div.css-175oi2r.r-1igl3o0.r-qklmqi.r-1adg3ll.r-1ny4l3l')))
+        extracted_text_list = []
+        for parent_div in parent_divs:
+            nested_div = parent_div.find_element(By.CSS_SELECTOR, 'div.css-1rynq56.r-8akbws.r-krxsd3.r-dnmrzs.r-1udh08x.r-bcqeeo.r-qvutc0.r-37j5jr.r-a023e6.r-rjixqe.r-16dba41.r-bnwqim')
+            text = nested_div.text
+            extracted_text_list.append(text)
+        return '\n\n'.join(extracted_text_list)
+    try:
+        driver.maximize_window()
+        driver.get("https://twitter.com/login")
+        time.sleep(5)
+
+        email_input = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "text")))
+        email_input.send_keys(TWITTER_USER_NAME)
+
+        next_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[text()='Next']")))
+        next_button.click()
+
+        password_input = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "password")))
+        password_input.send_keys(TWITTER_PASSWORD)
+
+        button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '[data-testid="LoginForm_Login_Button"]')))
+        button.click()
+
+        search_text = "#generalavailability"
+        extracted_text = extract_tweets(driver, search_text)
+        producer.send('twitter-llm', value=extracted_text)
+    except Exception as e:
+        pass
+        print(f"Error in scrape_twitter: {e}")
+    finally:
+        driver.quit()
 def scrape_slashdot(driver):
     driver.get("https://slashdot.org/")
     time.sleep(5)
@@ -63,14 +117,17 @@ def scrape_producthunt(driver):
                 print(f"Product Name: {product_name}, Description: {product_description}, Topics: {topics}")
 
     scroll_and_scrape_producthunt()
-
+def setup_kafka_producer():
+    producer = KafkaProducer(bootstrap_servers='localhost:9092', value_serializer=lambda x: x.encode('utf-8'))
+    return producer
 def main():
-    driver = setup_webdriver()
-    try:
-        scrape_slashdot(driver)
+        producer = setup_kafka_producer()
+ 
+        # scrape_slashdot(driver)
+        scrape_twitter(producer)
         # scrape_producthunt(driver)
-    finally:
-        driver.quit()
+
+      
 
 if __name__ == "__main__":
     main()
