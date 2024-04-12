@@ -7,6 +7,11 @@ This project automates the listing of B2B software products on G2, ensuring that
 ## Problem Statement
 G2 aims to list every B2B software product as soon as it becomes available. However, in many geographical regions, G2's visibility is low, leading to delays in software listings. This solution identifies new software products not currently listed on G2 and adds them to the platform efficiently.
 
+## Project Goals
+
+- # Fast and Efficient Listings: Automate the detection and listing of new software products to ensure real-time updates.
+- # Global Reach: Capture and list software launches worldwide, especially from underrepresented regions.
+- #Technological Innovation: Utilize modern technologies including web scraping, real-time data streams, and cloud-native services to maintain an efficient workflow.
 
 
 
