@@ -157,7 +157,7 @@ docker run --network="host" news-consumer
 ## create job
 
 ```bash
-# Build the product consumer
+
 kubectl apply -f kafka-zoopkeeper-deployment.yaml
 
 kubectl apply -f scrape-products-cronjob.yaml
@@ -170,7 +170,7 @@ kubectl apply -f news-cronjob.yaml
 ```
 
 ```bash
-# run the image
+
 kubectl get cronjobs
 
 kubectl get pods
