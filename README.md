@@ -123,6 +123,8 @@ docker run --network="host" scrape-products
 
 ```bash
 # Build the product consumer
+# Go to the respective directory
+cd KafkaConsumer\Software
 docker build -t software-consumer .
 # run the image
 docker run --network="host" software-consumer
@@ -130,6 +132,8 @@ docker run --network="host" software-consumer
 
 ```bash
 # Build the product consumer
+# Go to the respective directory
+cd KafkaConsumer\TwitterLLM
 docker build -t twitter-consumer .
 # run the image
 docker run --network="host" twitter-consumer
@@ -137,6 +141,8 @@ docker run --network="host" twitter-consumer
 
 ```bash
 # Build the product consumer
+# Go to the respective directory
+cd KafkaConsumer\NewsLLM
 docker build -t news-consumer .
 # run the image
 docker run --network="host" news-consumer
