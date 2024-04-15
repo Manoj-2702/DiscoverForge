@@ -225,7 +225,7 @@ def scrape_twitter(producer):
         # Log in process
         username_input = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.NAME, "text")))
         username_input.send_keys(TWITTER_USER_NAME)
-        print(TWITTER_USER_NAME)
+        # print(TWITTER_USER_NAME)
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[text()='Next']"))).click()
         
         password_input = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.NAME, "password")))
@@ -254,12 +254,12 @@ def scrape_twitter(producer):
         print("Scraping tweets")
         tweet_elements = driver.find_elements(By.CSS_SELECTOR, '[data-testid="tweet"]')
         for tweet in tweet_elements:
-            print("Tweets",tweet.text)
+            # print("Tweets",tweet.text)
             tweets.append(tweet.text)
 
         # Printing first 5 tweets for brevity
         for tweet in tweets[:]:
-            
+            # print(tweet)
             producer.send('x-llm', tweet)
             producer.flush()
 
@@ -335,7 +335,7 @@ def betalist_scraper(producer):
 def scrape_techpoint(producer):
 
     print("Scraping Techpoint Africa")
-    def producer(url_queue):
+    def news_producer(url_queue):
         driver = setup_webdriver()
         main_url = 'https://techpoint.africa/'
         driver.get(main_url)
@@ -400,6 +400,7 @@ def scrape_techpoint(producer):
                                     data_list.append(li.text.strip())
                     data_string = " ".join(data_list)  # Combine list items into one string
                     #print(f"Data from  {data_string}")  # Print the combined string
+                    print(data_string)
                     producer.send('news', data_string)
                     processed_urls.add(url)
                 except requests.RequestException as e:
@@ -409,7 +410,7 @@ def scrape_techpoint(producer):
 
 
     url_queue = Queue(maxsize=50)  # Limit queue size if memory management is a concern
-    producer_thread = threading.Thread(target=producer, args=(url_queue,))
+    producer_thread = threading.Thread(target=news_producer, args=(url_queue,))
     consumer_thread = threading.Thread(target=consumer, args=(url_queue,))
     
     producer_thread.start()

@@ -47,18 +47,35 @@ def fetch_products_g2(api_token, filter_name=None):
 
 def fetch_products_from_google(message_data):
     """ Fetches product information using Google's generative AI. """
+    print("Fetching products from Google")
     model = genai.GenerativeModel('gemini-pro')
-    prompt = f"""{message_data} \n Imagine a digital assistant meticulously analyzing a diverse collection of announcements related to the launch of new products and services in various industries. This assistant is tasked with identifying and categorizing each product or service mentioned, discerning whether each one represents a fresh market entry or an update to an existing offering. The goal is to compile this information into a straightforward, accessible format. Specifically, the assistant is required to present its findings as a list, focusing solely on the names of these products or services, neatly organized into an array. The array should exclusively contain the names, clearly distinguishing between novel introductions and updates to pre-existing entities, thus providing a clear, concise overview of the recent developments highlighted in the announcements.  Give the output in a json format which gives the product name and the status of the same whether its a new product or just a update to the existing product. The status should either be New Product or Update to existing product.Keep the key name of the product name as Product Name and the status as Status """
+    prompt = f"""{message_data} \n Imagine a digital assistant meticulously analyzing a diverse collection
+      of announcements related to the launch of new products and services in various industries.
+        This assistant is tasked with identifying and categorizing each product or service mentioned, 
+        discerning whether each one represents a fresh market entry or an update to an existing offering.
+          The goal is to compile this information into a straightforward, accessible format. Specifically,
+            the assistant is required to present its findings as a list, focusing solely on the names of these 
+            products or services, neatly organized into an array. The array should exclusively contain the names, 
+            clearly distinguishing between novel introductions and updates to pre-existing entities, thus providing a clear,
+              concise overview of the recent developments highlighted in the announcements, identify if the product is B2B product. 
+                Give the output in a json format which gives the product name and the status of the same whether
+                  its a new product or just a update to the existing product. The status should either be New Product 
+                  or Update to existing product.Keep the key name of the product name 
+                  as Product Name and the status as Status """
     response = model.generate_content(prompt)
+    print(response.text)
     return response.text
 
 def process_product_info(message_data):
     """ Processes each message to extract and handle product information. """
+    print("Processing message")
     response_text = fetch_products_from_google(message_data)
     if response_text:
         clean_json = response_text.lstrip("```json").lstrip("```JSON").rstrip("```").strip()
+        print(clean_json, "Cleaned JSON")
         try:
             products = json.loads(clean_json)
+            print("Products:", products)
             for product in products:
                 process_individual_product(product)
         except json.JSONDecodeError as e:
@@ -94,9 +111,9 @@ def main():
         bootstrap_servers=['localhost:9092'],
         auto_offset_reset='earliest',
         enable_auto_commit=True,
-        group_id='twitter_consumer_group',
+        group_id='my-group',
     )
-    with ThreadPoolExecutor(max_workers=3) as executor:
+    with ThreadPoolExecutor(max_workers=1) as executor:
         for message in consumer:
             # print(f"Received message: {message.value.decode('utf-8')}")
             executor.submit(process_product_info, message.value.decode('utf-8'))
