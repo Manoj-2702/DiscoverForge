@@ -4,6 +4,9 @@
 
 ### Team Members : Manoj Kumar H S , Nandish N S , K S Abhiram
 
+### Website
+https://trycatchdevs.streamlit.app/
+
 ## Overview
 
 This project automates the listing of B2B software products on G2, ensuring that new software is promptly and efficiently added to the G2 marketplace. By leveraging advanced web scraping techniques, real-time data streaming, and automated workflows, this system maximizes the visibility and accessibility of new software products, particularly in regions where G2 has low penetration.
@@ -55,6 +58,7 @@ This project automates the listing of B2B software products on G2, ensuring that
 ![image](G2-hackathon.png)
 
 ### Initial Setup
+
 Comprehensive scrapers are deployed initially to perform a deep crawl of targeted sources to populate the database with existing software products. BeautifulSoup is used for static content and Selenium for dynamic content.
 
 ### Ongoing Operation
@@ -89,6 +93,13 @@ Kubernetes ensures scalable and resilient deployment of all system components.
 
 ![image](https://github.com/Manoj-2702/G2Hack/assets/92267208/4ce38d65-ebe1-4a2f-8db8-ea07ac804fc9)
 
+## Streamlit Website
+
+![image](website.png)
+
+```bash
+https://trycatchdevs.streamlit.app/
+```
 ## Kafka Setup
 
 run this command in root directory of the project
@@ -118,18 +129,26 @@ docker run --network="host" scrape-products
 
 ```bash
 # Build the product consumer
+# Go to the respective directory
+cd KafkaConsumer\Software
 docker build -t software-consumer .
 # run the image
 docker run --network="host" software-consumer
 ```
+
 ```bash
 # Build the product consumer
+# Go to the respective directory
+cd KafkaConsumer\TwitterLLM
 docker build -t twitter-consumer .
 # run the image
 docker run --network="host" twitter-consumer
 ```
+
 ```bash
 # Build the product consumer
+# Go to the respective directory
+cd KafkaConsumer\NewsLLM
 docker build -t news-consumer .
 # run the image
 docker run --network="host" news-consumer
@@ -138,7 +157,7 @@ docker run --network="host" news-consumer
 ## create job
 
 ```bash
-# Build the product consumer
+
 kubectl apply -f kafka-zoopkeeper-deployment.yaml
 
 kubectl apply -f scrape-products-cronjob.yaml
@@ -149,11 +168,18 @@ kubectl apply -f twitter-cronjob.yaml
 
 kubectl apply -f news-cronjob.yaml
 ```
+
 ```bash
-# run the image
+
 kubectl get cronjobs
 
 kubectl get pods
 
 kubectl get deployments
 ```
+## mongodb atlas clustor
+![image](https://github.com/Manoj-2702/G2Hack_TryCatchDevs/assets/92267208/a5e87fd9-2b8c-4b7d-a45e-50089ddbfaca)
+
+## Kubectl
+![image](https://github.com/Manoj-2702/G2Hack_TryCatchDevs/assets/92267208/ee4d1dd8-9ad0-4855-8a27-bb148feedcba)
+
