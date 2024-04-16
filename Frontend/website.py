@@ -27,17 +27,18 @@ def main():
             "$lt": end_of_day
         }
     }
-    pipeline = [
-        {"$match": query},
-        {"$group": {
-            "_id": "$product_name",
-            "description": {"$first": "$desc"}
-        }},
-        {"$sort": {"_id": 1}}  # Sort by product name
-    ]
-    results = collection.aggregate(pipeline)
-    products = [{"Product Name": result["_id"], "Description": result.get("desc", "No description available")}
-                for result in results]
+    results = collection.find(query).sort("product_name", -1)
+    unique_products = {}
+    for result in results:
+        product_name = result["product_name"]
+        if product_name not in unique_products:
+            unique_products[product_name] = result.get("desc", "No description available")
+
+    # Prepare data for display
+    products = [{"Product Name": name, "Description": desc} for name, desc in unique_products.items()]
+    
+    # products = [{"Product Name": result["product_name"], "Description": result.get("desc", "No description available")}
+    #             for result in results]
 
     count = len(products)
     st.write(f"Number of unique products on the selected date: {count}")
