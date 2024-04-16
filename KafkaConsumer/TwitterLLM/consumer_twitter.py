@@ -58,12 +58,13 @@ def fetch_products_from_google(message_data):
             products or services, neatly organized into an array. The array should exclusively contain the names, 
             clearly distinguishing between novel introductions and updates to pre-existing entities, thus providing a clear,
               concise overview of the recent developments highlighted in the announcements, identify if the product is B2B product. 
+              Make sure that the product you identify is a B2B product and only then include it in the list.
                 Give the output in a json format which gives the product name and the status of the same whether
                   its a new product or just a update to the existing product. The status should either be New Product 
                   or Update to existing product.Keep the key name of the product name 
                   as Product Name and the status as Status """
     response = model.generate_content(prompt)
-    print(response.text)
+    # print(response.text)
     return response.text
 
 def process_product_info(message_data):
@@ -72,14 +73,15 @@ def process_product_info(message_data):
     response_text = fetch_products_from_google(message_data)
     if response_text:
         clean_json = response_text.lstrip("```json").lstrip("```JSON").rstrip("```").strip()
-        print(clean_json, "Cleaned JSON")
+        # print(clean_json, "Cleaned JSON")
         try:
             products = json.loads(clean_json)
             print("Products:", products)
             for product in products:
                 process_individual_product(product)
         except json.JSONDecodeError as e:
-            print(f"Failed to decode JSON: {str(e)}")
+            # print(f"Failed to decode JSON: {str(e)}")
+            pass
 
 def process_individual_product(product):
     """ Processes each individual product entry. """

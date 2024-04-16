@@ -1,24 +1,22 @@
-import streamlit as st
-import datetime
-import os
+import Flask
+from flask import Flask, render_template, request, redirect, url_for
 from dotenv import load_dotenv
 from pymongo import MongoClient
-import pandas as pd
+import os
+import datetime
+
 load_dotenv()
 mongo_url=os.getenv("MONGO_CONN_STRING")
-
 client = MongoClient("mongodb+srv://g2hack:g2hack%40123@g2.0fzaw48.mongodb.net/?retryWrites=true&w=majority")
 db = client['g2hack']  
 collection = db['unavailableProducts']
 
 
-def main():
-    st.title("Try Catch Devs")
-    st.text("Developed by- Manoj Kumar HS, Nandish NS, Abhiram Karanth")
-    input_date = st.date_input("Select date", value=datetime.date.today())
-    st.write(f"Selected date: {input_date}")
-    st.write(" ")
+app = Flask(__name__)
 
+
+@app.route('/getdata', methods=['GET'])
+def getdata():
     start_of_day = datetime.datetime(input_date.year, input_date.month, input_date.day)
     end_of_day = start_of_day + datetime.timedelta(days=1)
     query = {
@@ -40,14 +38,18 @@ def main():
                 for result in results]
 
     count = len(products)
-    st.write(f"Number of unique products on the selected date: {count}")
 
     if products:
         df = pd.DataFrame(products)
-        st.table(df)
+        return df
     else:
-        st.write("No products found for the selected date.")
+        print("No products found for the selected date.")
+
+    return "Data Received Successfully"
 
 
-if __name__ == "__main__":
-    main()
+
+@app.route('/')
+def serverStatus():
+    return "✨Server is Up and Running✨"
+

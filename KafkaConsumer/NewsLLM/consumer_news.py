@@ -54,7 +54,9 @@ def fetch_products_from_google(message_data):
         straightforward, accessible format. Specifically, the assistant is required to present its findings as a list, focusing solely on the names of
           these products or services, neatly organized into an array. The array should exclusively contain the names, clearly distinguishing between
             novel introductions and updates to pre-existing entities, thus providing a clear, concise overview of the recent developments highlighted
-              in the announcements.  Give the output in a json format which gives the product name and the status of the same whether its a new product
+              in the announcements, identify if it a B2B product. 
+              Determine from the following news excerpt whether it pertains to a B2B software product and if the product mentioned is new or already existing. Provide a one-word answer for each question.
+                Give the output in a json format which gives the product name and the status of the same whether its a new product
                 or just a update to the existing product. The status should either be New Product or Update to existing product.Keep the key name of the
                   product name as Product Name and the status as Status """
     response = model.generate_content(prompt)
@@ -70,7 +72,8 @@ def process_product_info(message_data):
             for product in products:
                 process_individual_product(product)
         except json.JSONDecodeError as e:
-            print(f"Failed to decode JSON: {str(e)}")
+            # print(f"Failed to decode JSON: {str(e)}")
+            pass
 
 def process_individual_product(product):
     """ Processes each individual product entry. """
@@ -106,7 +109,7 @@ def main():
     )
     with ThreadPoolExecutor(max_workers=1) as executor:
         for message in consumer:
-            print(f"Received message: {message.value.decode('utf-8')}")
+            # print(f"Received message: {message.value.decode('utf-8')}")
             executor.submit(process_product_info, message.value.decode('utf-8'))
 
 if __name__ == "__main__":

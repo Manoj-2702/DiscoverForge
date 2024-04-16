@@ -21,6 +21,8 @@ load_dotenv()
 TWITTER_USER_NAME=os.getenv("TWITTER_USER_NAME")
 TWITTER_PASSWORD=os.getenv("TWITTER_PASSWORD")
 
+
+
 def setup_webdriver():
 
     # ChromeDriverManager().clear_cache()
@@ -72,16 +74,20 @@ def scrape_slashdot(producer):
             #   driver.quit()
     except NoSuchElementException as e:
        
-        print(f"Element not found: {e}")
+        # print(f"Element not found: {e}")
+        pass
     except ElementNotInteractableException as e:
      
-        print(f"Element not interactable: {e}")
+        # print(f"Element not interactable: {e}")
+        pass
     except TimeoutException as e:
        
-        print(f"Operation timed out: {e}")
+        # print(f"Operation timed out: {e}")
+        pass
     except Exception as e:
         
-        print(f"Error in scrape_slashdot: {e}")
+        # print(f"Error in scrape_slashdot: {e}")
+        pass
 
 
 def scrape_producthunt(producer):
@@ -95,7 +101,7 @@ def scrape_producthunt(producer):
             # Parse the HTML content of the page with BeautifulSoup
             soup = BeautifulSoup(response.text, 'html.parser')
         except requests.RequestException as e:
-            print(f"Failed to retrieve data from {url}: {e}")
+            # print(f"Failed to retrieve data from {url}: {e}")
             return []
         collected_hrefs = []
 
@@ -147,7 +153,7 @@ def scrape_producthunt(producer):
                 # Send the data to Kafka
                 producer.send('Software', value=data)
             except requests.RequestException as e:
-                print(f"Failed to retrieve or process data from {url}: {e}")
+                # print(f"Failed to retrieve or process data from {url}: {e}")
                 continue  
 
             posts_data.append(data)
@@ -210,7 +216,7 @@ def scrape_sideprojectors(producer):
 
     except Exception as e:
         pass
-        print(f"Error in scrape_slashdot: {e}")
+        # print(f"Error in scrape_slashdot: {e}")
 
 
 def scrape_twitter(producer):
@@ -264,7 +270,8 @@ def scrape_twitter(producer):
             producer.flush()
 
     except Exception as e:
-        print(f"Error in scrape_twitter: {e}")
+        # print(f"Error in scrape_twitter: {e}")
+        pass
     finally:
         driver.quit()
 
@@ -283,10 +290,10 @@ def betalist_scraper(producer):
                     break
                 except requests.RequestException as e:
                     attempt_count += 1
-                    print(f"Failed to fetch {full_url}, attempt {attempt_count}. Error: {e}")
+                    # print(f"Failed to fetch {full_url}, attempt {attempt_count}. Error: {e}")
                     time.sleep(2)  # Wait 2 seconds before retrying
             if attempt_count == 3:
-                print(f"Failed to process {full_url} after multiple attempts.")
+                # print(f"Failed to process {full_url} after multiple attempts.")
                 continue 
 
             # Parse the HTML content of the page
@@ -313,7 +320,8 @@ def betalist_scraper(producer):
             with open('output_sites2.json', 'w') as f:
                 json.dump(topics_data, f, indent=4)
         except IOError as e:
-            print(f"Error writing to file: {e}")
+            # print(f"Error writing to file: {e}")
+            pass
 
     url = "https://betalist.com/topics"
     try:
@@ -327,9 +335,11 @@ def betalist_scraper(producer):
             href_list = [link.get('href') for link in links]
             scrape_and_print_all_details("https://betalist.com", href_list, producer)
         else:
-            print("There are less than two 'myContainer' divs on the page.")
+            # print("There are less than two 'myContainer' divs on the page.")
+            pass
     except requests.RequestException as e:
-        print(f"Failed to load page {url}: {e}")
+        # print(f"Failed to load page {url}: {e}")
+        pass
 
 
 def scrape_techpoint(producer):
@@ -399,12 +409,12 @@ def scrape_techpoint(producer):
                                 if "Next" not in li.text and "Previous" not in li.text:
                                     data_list.append(li.text.strip())
                     data_string = " ".join(data_list)  # Combine list items into one string
-                    #print(f"Data from  {data_string}")  # Print the combined string
-                    print(data_string)
+                  
                     producer.send('news', data_string)
                     processed_urls.add(url)
                 except requests.RequestException as e:
-                    print(f"Failed to retrieve {url}: {str(e)}")
+                    # print(f"Failed to retrieve {url}: {str(e)}")
+                    continue
                 url_queue.task_done()
 
 
@@ -420,16 +430,24 @@ def scrape_techpoint(producer):
     url_queue.join()  # Ensure that all URLs are processed
     consumer_thread.join()
 
+def run_safe(func, *args):
+    try:
+        func(*args)
+    except Exception as e:
+        # print(f"Error in {func.__name__}: {e}")
+        pass
+
 
 def main():
     producer = setup_kafka_producer()
     # Initialize and start threads
-    thread1 = Thread(target=scrape_slashdot, args=(producer,)) 
-    thread2 = Thread(target=scrape_producthunt, args=(producer,))   #no crowler required
-    thread3 = Thread(target=scrape_sideprojectors, args=(producer,))
-    thread4 = Thread(target=scrape_twitter, args=(producer,))
-    thread5 = Thread(target=betalist_scraper, args=(producer,))
-    thread6 = Thread(target=scrape_techpoint, args=(producer,))
+
+    thread1 = Thread(target=run_safe, args=(scrape_slashdot, producer))
+    thread2 = Thread(target=run_safe, args=(scrape_producthunt, producer))
+    thread3 = Thread(target=run_safe, args=(scrape_sideprojectors, producer))
+    thread4 = Thread(target=run_safe, args=(scrape_twitter, producer))
+    thread5 = Thread(target=run_safe, args=(betalist_scraper, producer))
+    thread6 = Thread(target=run_safe, args=(scrape_techpoint, producer))
     
     thread1.start()
     thread2.start()
