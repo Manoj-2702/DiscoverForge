@@ -372,7 +372,7 @@ def scrape_techpoint(producer):
                     time.sleep(3)  # Allow time for new content to load
                 except Exception as e:
                     attempts += 1
-                    print(f"Attempt {attempts}: Failed to find 'Load More' button oin techpoint. Trying again...")
+                    # print(f"Attempt {attempts}: Failed to find 'Load More' button oin techpoint. Trying again...")
                     if attempts >= max_attempts:
                         print("No more 'Load More' button found after multiple attempts. Ending production.")
                         break
