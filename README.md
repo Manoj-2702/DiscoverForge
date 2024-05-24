@@ -1,4 +1,10 @@
-# G2 Hackathon
+<h1 align="center">DiscoverForge :Forge Ahead, Discover More</h1>
+
+<p align="center">
+   <img src="https://github.com/Manoj-2702/DiscoverForge/assets/103581128/b90d11e6-3841-49bd-bcaa-7e248b993e3c" alt="logo" />
+</p>
+
+## G2 Hackathon
 
 ## Team Name : Try Catch Devs
 
